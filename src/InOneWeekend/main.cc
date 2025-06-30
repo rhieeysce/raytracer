@@ -1,32 +1,21 @@
-#include "color.h"
-#include "vec3.h"
-#include "ray.h"
+#include "header.h"
+#include "hittable.h"
+#include "hittable_list.h"
+#include "sphere.h"
 
-#include <iostream>
+color ray_color(const ray& r, const hittable& world) {
+    // auto t = hit_sphere(point3(0,0,-1), 0.5, r);
+    // if (t > 0.0) {
+    //     vec3 normal = unit_vector(r.at(t) - point3(0,0,-1));
+    //     return 0.5*color(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0);
+    // }
 
-double hit_sphere(const point3& center, double radius, const ray& r) {
-    vec3 oc = center - r.origin();
-    auto a = r.direction().length_squared();
-    auto h = dot(oc, r.direction());
-    auto c = oc.length_squared() - radius*radius;
-    auto discriminant = h*h - a*c;
-
-    if (discriminant < 0) {
-        return -1.0;
-    } else {
-        //returning smallest t value
-        return (h - std::sqrt(discriminant)) / a;
-    }
-}
-
-color ray_color(const ray& r) {
-    auto t = hit_sphere(point3(0,0,-1), 0.5, r);
-    if (t > 0.0) {
-        vec3 normal = unit_vector(r.at(t) - point3(0,0,-1));
-        return 0.5*color(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0);
+    hit_record rec;
+    if (world.hit(r,0,infinity,rec)) {
+        return 0.5 * (rec.normal + color(1,1,1));
     }
 
-    auto unit_vec = unit_vector(r.direction());
+    vec3 unit_vec = unit_vector(r.direction());
     auto y01 = 0.5 * (unit_vec.y() + 1.0);
     return (1.0-y01) * color(1.0,1.0,1.0) + y01 * color(0.5,0.7,1.0);
 }
@@ -41,6 +30,11 @@ int main() {
     //viewport sizing can be less than 1.0
     auto viewport_height = 2.0;
     auto viewport_width = viewport_height * (double(image_width) / double(image_height));
+
+    //World
+    hittable_list world;
+    world.add(make_shared<sphere>(point3(0,0,-1), 0.5));        //main sphere
+    world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));   //ground
 
     //camera
     auto focal_length = 1.0;
@@ -74,10 +68,8 @@ int main() {
             auto ray_direction = pixel_center - eye_point;
 
             ray r(eye_point, ray_direction);
-            color pixel_color = ray_color(r);       //ray_color will be defined in main.cc
 
-
-
+            color pixel_color = ray_color(r,world);
             write_color(std::cout, pixel_color);
         }
     }

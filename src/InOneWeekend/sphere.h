@@ -2,7 +2,6 @@
 #define SPHERE_H
 
 #include "hittable.h"
-#include "vec3.h"
 
 
 class sphere : public hittable {
@@ -11,8 +10,10 @@ class sphere : public hittable {
         double radius;
 
     public:
+        //constructor
         sphere(const point3& c, double r) : center(c), radius(std::fmax(0,r)) {}
 
+        //determines if a given ray hits this sphere
         bool hit(const ray& r, double ray_tmin, double ray_tmax, hit_record& rec) const override {
             vec3 oc = center - r.origin();
             auto a = r.direction().length_squared();
@@ -20,12 +21,14 @@ class sphere : public hittable {
             auto c = oc.length_squared() - radius*radius;
             auto discriminant = h*h - a*c;
 
+            //negative discriminant means ray does not hit the sphere
             if (discriminant < 0) {
                 return false;
             }
 
             auto sqrtd = std::sqrt(discriminant);
 
+            //finding values for t with quadratic formula
             auto root = (h - sqrtd) / a;
             if (root <= ray_tmin || root >= ray_tmax) {
                 root = (h + sqrtd) / a;
@@ -34,6 +37,7 @@ class sphere : public hittable {
                 }
             }
 
+            //updating hit record
             rec.t = root;
             rec.p = r.at(rec.t);
             rec.set_face_normal(r, (rec.p - center) / radius);
