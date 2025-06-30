@@ -36,7 +36,7 @@ class sphere : public hittable {
 
             rec.t = root;
             rec.p = r.at(rec.t);
-            rec.normal = (rec.p - center) / radius;
+            rec.set_face_normal(r, (rec.p - center) / radius);
 
             return true;
         }
