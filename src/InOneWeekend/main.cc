@@ -4,18 +4,26 @@
 
 #include <iostream>
 
-bool hit_sphere(const point3& center, double radius, const ray& r) {
+double hit_sphere(const point3& center, double radius, const ray& r) {
     vec3 oc = center - r.origin();
-    auto a = dot(r.direction(), r.direction());
-    auto b = -2.0 * dot(r.direction(), oc);
-    auto c = dot(oc, oc) - radius*radius;
-    auto discriminant = b*b - 4*a*c;
-    return (discriminant >= 0);
+    auto a = r.direction().length_squared();
+    auto h = dot(oc, r.direction());
+    auto c = oc.length_squared() - radius*radius;
+    auto discriminant = h*h - a*c;
+
+    if (discriminant < 0) {
+        return -1.0;
+    } else {
+        //returning smallest t value
+        return (h - std::sqrt(discriminant)) / a;
+    }
 }
 
 color ray_color(const ray& r) {
-    if (hit_sphere(point3(0,0,-1), 0.5, r)) {
-        return color(0, 0, 0);
+    auto t = hit_sphere(point3(0,0,-1), 0.5, r);
+    if (t > 0.0) {
+        vec3 normal = unit_vector(r.at(t) - point3(0,0,-1));
+        return 0.5*color(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0);
     }
 
     auto unit_vec = unit_vector(r.direction());
@@ -27,7 +35,7 @@ int main() {
 
     //image
     auto aspect_ratio = 16.0 / 9.0;
-    int image_height = 230;
+    int image_height = 900;
     int image_width = int(image_height * aspect_ratio);
 
     //viewport sizing can be less than 1.0
