@@ -25,6 +25,7 @@ set ( SOURCE_ONE_WEEKEND
   src/InOneWeekend/hittable_list.h
   src/InOneWeekend/header.h
   src/InOneWeekend/interval.h
+  src/InOneWeekend/camera.h
 )
 
 include_directories(src)
@@ -57,4 +58,4 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # Executables
-add_executable(Raytracer      ${SOURCE_ONE_WEEKEND})
+add_executable(raytracer      ${SOURCE_ONE_WEEKEND})
