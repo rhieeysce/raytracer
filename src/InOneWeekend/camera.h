@@ -2,6 +2,8 @@
 #define CAMERA_H
 
 #include "hittable.h"
+#include <thread>
+#include <vector>
 
 class camera {
     public:
@@ -10,35 +12,36 @@ class camera {
         double aspect_ratio = 1.0;      //width divided by height
         int image_width = 100;
         int samples_per_pixel = 10;     //count of random samples for each pixel
+        int max_depth = 10;         //recursive depth
 
         void render(const hittable& world) {
             initialize();
 
-            std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
+            std::vector<std::vector<color>> pixels(image_height, std::vector<color>(image_width));
+            std::vector<std::thread> threads;
+            int section_height = image_height / 2;
+            int section_width = image_width / 2;
 
-            for (int j = 0; j < image_height; j++) {
-                std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-                for (int i = 0; i < image_width; i++) {                    
+            auto render_helper = [this, &world, &pixels](int x_start, int x_end, int y_start, int y_end) {
+                this->render_section(world, x_start, x_end, y_start, y_end, pixels);
+            };
 
-                    color pixel_color(0,0,0);
+            threads.emplace_back(render_helper, 0, section_width, 0, section_height);
+            threads.emplace_back(render_helper, section_width, image_width, 0, section_height);
+            threads.emplace_back(render_helper, 0, section_width, section_height, image_height);
+            threads.emplace_back(render_helper, section_width, image_width, section_height, image_height);
 
-                    for (int sample = 0; sample < samples_per_pixel; sample++) {
-                        ray r = get_ray(i, j);
-                        pixel_color += ray_color(r, world);
-                    }
-                    write_color(std::cout, pixel_samples_scale * pixel_color);
-                    // auto pixel_center = pixel00_location + (i * pixel_u) + (j * pixel_v);
-                    // auto ray_direction = pixel_center - eye_point;
-
-                    // ray r(eye_point, ray_direction);
-
-                    // color pixel_color = ray_color(r,world);
-                    // write_color(std::cout, pixel_color);
-                }
+            for (auto& t : threads) {
+                t.join();
             }
 
-            std::clog << "\rDone.                       \n";
+            std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
 
+            for (int j = 0; j < image_height; ++j) {
+                for (int i = 0; i < image_width; ++i) {
+                    write_color(std::cout, pixels[j][i]);
+                }
+            }
         }
 
 
@@ -50,6 +53,25 @@ class camera {
         point3 pixel00_location;
         vec3 pixel_u;
         vec3 pixel_v;
+
+        void render_section(const hittable &world, int x_start, int x_end, int y_start, int y_end, std::vector<std::vector<color>>& pixels) {
+            for (int j = y_start; j < y_end; j++) {
+                std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+                for (int i = x_start; i < x_end; i++) {                    
+
+                    color pixel_color(0,0,0);
+
+                    for (int sample = 0; sample < samples_per_pixel; sample++) {
+                        ray r = get_ray(i, j);
+                        pixel_color += ray_color(r, max_depth, world);
+                    }
+                    pixels[j][i] = pixel_samples_scale * pixel_color;
+                }
+            }
+
+            std::clog << "\rDone.                       \n";
+
+        }
 
         void initialize() {
             image_height = int(image_width / aspect_ratio);
@@ -95,11 +117,16 @@ class camera {
             return vec3(random_double() - 0.5, random_double() - 0.5, 0);
         }
 
-        color ray_color(const ray& r, const hittable& world) const {
+        color ray_color(const ray& r, int depth, const hittable& world) const {
+
+            if (depth <= 0) {
+                return color(0,0,0);
+            }
 
             hit_record rec;
             if (world.hit(r, interval(0,infinity), rec)) {
-                return 0.5 * (rec.normal + color(1,1,1));
+                vec3 direction = random_on_hemisphere(rec.normal);
+                return 0.5 * ray_color(ray(rec.p, direction), depth-1, world);
             }
 
             vec3 unit_vec = unit_vector(r.direction());
