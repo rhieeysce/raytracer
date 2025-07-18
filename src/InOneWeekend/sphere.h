@@ -8,6 +8,7 @@ class sphere : public hittable {
     private:
         point3 center;
         double radius;
+        shared_ptr<material> mat;
 
     public:
         //constructor
