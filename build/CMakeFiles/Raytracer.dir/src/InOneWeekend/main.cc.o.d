@@ -786,6 +786,7 @@ CMakeFiles/raytracer.dir/src/InOneWeekend/main.cc.o: \
   /Users/reece/Projects/Raytracer/src/InOneWeekend/interval.h \
   /Users/reece/Projects/Raytracer/src/InOneWeekend/vec3.h \
   /Users/reece/Projects/Raytracer/src/InOneWeekend/ray.h \
+  /Users/reece/Projects/Raytracer/src/InOneWeekend/material.h \
   /Users/reece/Projects/Raytracer/src/InOneWeekend/hittable.h \
   /Users/reece/Projects/Raytracer/src/InOneWeekend/hittable_list.h \
   /Users/reece/Projects/Raytracer/src/InOneWeekend/sphere.h \
